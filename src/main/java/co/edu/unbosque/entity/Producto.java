@@ -17,7 +17,7 @@ public class Producto implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="id", nullable=false)
-	private short id;
+	private Long id;
 
 	@Column(name="costo_compra")
 	private BigDecimal costoCompra;
@@ -54,11 +54,11 @@ public class Producto implements Serializable {
 	public Producto() {
 	}
 
-	public short getId() {
+	public Long getId() {
 		return this.id;
 	}
 
-	public void setId(short id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

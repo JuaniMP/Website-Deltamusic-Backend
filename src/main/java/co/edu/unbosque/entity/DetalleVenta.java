@@ -16,7 +16,7 @@ public class DetalleVenta implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="id", nullable=false)
-	private int id;
+	private Long id;
 
 	@Column(name="cant_comp")
 	private int cantComp;
@@ -39,11 +39,11 @@ public class DetalleVenta implements Serializable {
 	public DetalleVenta() {
 	}
 
-	public int getId() {
+	public Long getId() {
 		return this.id;
 	}
 
-	public void setId(int id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

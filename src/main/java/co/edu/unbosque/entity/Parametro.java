@@ -17,7 +17,7 @@ public class Parametro implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="id", nullable=false)
-	private short id;
+	private Long id;
 	
 	@Column(name="descripcion")
 	private String descripcion;
@@ -42,11 +42,11 @@ public class Parametro implements Serializable {
 	public Parametro() {
 	}
 
-	public short getId() {
+	public Long getId() {
 		return this.id;
 	}
 
-	public void setId(short id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

@@ -4,10 +4,15 @@ package co.edu.unbosque.controller;
 import co.edu.unbosque.entity.Usuario;
 import co.edu.unbosque.service.api.UsuarioServiceAPI;
 import co.edu.unbosque.utils.ResourceNotFoundException;
+import co.edu.unbosque.utils.Util;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import co.edu.unbosque.entity.Auditoria;
+import co.edu.unbosque.service.api.AuditoriaServiceAPI;
+
 
 import java.util.List;
 
@@ -18,6 +23,14 @@ public class UsuarioRestController {
 
     @Autowired
     private UsuarioServiceAPI usuarioServiceAPI;
+    
+    @Autowired
+    private AuditoriaServiceAPI auditoriaServiceAPI;
+    
+    @Autowired
+    private Util util;
+   
+   
 
     @GetMapping(value="/getAll")
     //ResponseEntity List<Usuario> getAll(){
@@ -27,7 +40,8 @@ public class UsuarioRestController {
 
 
     @PostMapping(value="/saveUsuario")
-    public ResponseEntity<Usuario> save(@RequestBody Usuario usuario){
+    public ResponseEntity<Usuario> save(@RequestBody Usuario usuario, Auditoria auditoria){
+        usuario.setClaveUsrio(util.generarHash(usuario, usuario.getClaveUsrio()));
         Usuario obj = usuarioServiceAPI.save(usuario);
         return new ResponseEntity<Usuario>(obj, HttpStatus.OK); // 200
     }

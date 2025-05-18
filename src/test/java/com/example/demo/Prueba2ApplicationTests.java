@@ -1,10 +1,10 @@
-package co.edu.unbosque;
+package com.example.demo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class Prg2Webjsf07ApplicationTests {
+class Prueba2ApplicationTests {
 
 	@Test
 	void contextLoads() {

@@ -16,7 +16,7 @@ public class Empresa implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="id", nullable=false)
-	private short id;
+	private Long id;
 
 	@Column(name="correo_electronico")
 	private String correoElectronico;
@@ -36,11 +36,11 @@ public class Empresa implements Serializable {
 	public Empresa() {
 	}
 
-	public short getId() {
+	public Long getId() {
 		return this.id;
 	}
 
-	public void setId(short id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
