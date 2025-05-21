@@ -33,7 +33,8 @@ public class Auditoria implements Serializable {
 	private Date fchaAudtria;
 
 	@Column(name="id_tabla")
-	private int idTabla;
+	private Long idTabla;
+
 
 	@Column(name="tabla_accion")
 	private String tablaAccion;
@@ -84,11 +85,11 @@ public class Auditoria implements Serializable {
 		this.fchaAudtria = fchaAudtria;
 	}
 
-	public int getIdTabla() {
+	public Long getIdTabla() {
 		return this.idTabla;
 	}
 
-	public void setIdTabla(int idTabla) {
+	public void setIdTabla(Long idTabla) {
 		this.idTabla = idTabla;
 	}
 

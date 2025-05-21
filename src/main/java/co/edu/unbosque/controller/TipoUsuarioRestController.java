@@ -1,53 +1,72 @@
 package co.edu.unbosque.controller;
 
-import co.edu.unbosque.entity.TipoUsuario; 
-import co.edu.unbosque.service.api.TipoUsuarioServiceAPI; 
+import co.edu.unbosque.entity.Auditoria;
+import co.edu.unbosque.entity.TipoUsuario;
+import co.edu.unbosque.service.api.AuditoriaServiceAPI;
+import co.edu.unbosque.service.api.TipoUsuarioServiceAPI;
 import co.edu.unbosque.utils.ResourceNotFoundException;
+import co.edu.unbosque.utils.Util;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
-//@CrossOrigin(origins = "http://localhost:8181",maxAge = 3600)
 @RestController
-@RequestMapping("/tipousuario") 
-public class TipoUsuarioRestController { 
+@RequestMapping("/tipousuario")
+public class TipoUsuarioRestController {
 
     @Autowired
-    private TipoUsuarioServiceAPI tipoUsuarioServiceAPI; 
+    private TipoUsuarioServiceAPI tipoUsuarioServiceAPI;
 
-    @GetMapping(value="/getAll")
-    //ResponseEntity List<TipoUsuario> getAll(){
-    public List<TipoUsuario> getAll(){
-        return tipoUsuarioServiceAPI.getAll(); 
+    @Autowired
+    private AuditoriaServiceAPI auditoriaServiceAPI;
+
+    @GetMapping(value = "/getAll")
+    public List<TipoUsuario> getAll() {
+        return tipoUsuarioServiceAPI.getAll();
     }
 
-    @PostMapping(value="/saveTipoUsuario") // Cambié /saveUsuario por /saveTipoUsuario
-    public ResponseEntity<TipoUsuario> save(@RequestBody TipoUsuario tipoUsuario){ 
-        TipoUsuario obj = tipoUsuarioServiceAPI.save(tipoUsuario); 
-        return new ResponseEntity<TipoUsuario>(obj, HttpStatus.OK); // 200
-    }
+    @PostMapping(value = "/saveTipoUsuario")
+    public ResponseEntity<TipoUsuario> save(@RequestBody TipoUsuario tipoUsuario, HttpServletRequest request) {
+        String accionAuditoria = "I"; // Por defecto, inserción
 
-    @GetMapping(value="/findRecord/{id}")
-    public ResponseEntity<TipoUsuario> getTipoUsuarioById(@PathVariable Long id) 
-            throws ResourceNotFoundException {
-        TipoUsuario tipoUsuario = tipoUsuarioServiceAPI.get(id); 
-        if (tipoUsuario == null){
-            new ResourceNotFoundException("Record not found for <TipoUsuario>"+id); 
+        if (tipoUsuario.getId() != null) {
+            TipoUsuario existente = tipoUsuarioServiceAPI.get(tipoUsuario.getId());
+            if (existente != null) {
+                accionAuditoria = "U"; // Actualización
+            }
         }
-        return ResponseEntity.ok().body(tipoUsuario); 
+
+        TipoUsuario obj = tipoUsuarioServiceAPI.save(tipoUsuario);
+
+        Auditoria aud = new Auditoria();
+        aud.setTablaAccion("tipousuario");
+        aud.setAccionAudtria(accionAuditoria);
+        aud.setUsrioAudtria("usuario"); // Cambiar por usuario autenticado real
+        aud.setIdTabla(obj.getId());
+        aud.setComentarioAudtria(
+                (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de tipo usuario con ID " + obj.getId()
+        );
+        aud.setFchaAudtria(new Date());
+        aud.setAddressAudtria(Util.getClientIp(request));
+
+        auditoriaServiceAPI.save(aud);
+
+        return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/deleteTipoUsuario/{id}") 
-    public ResponseEntity<TipoUsuario> delete(@PathVariable Long id){
-        TipoUsuario tipoUsuario = tipoUsuarioServiceAPI.get(id); 
-        if (tipoUsuario != null){
-            tipoUsuarioServiceAPI.delete(id); 
-        }else{
-            return new ResponseEntity<TipoUsuario>(tipoUsuario, HttpStatus.INTERNAL_SERVER_ERROR); 
+    @GetMapping(value = "/findRecord/{id}")
+    public ResponseEntity<TipoUsuario> getTipoUsuarioById(@PathVariable Long id) throws ResourceNotFoundException {
+        TipoUsuario tipoUsuario = tipoUsuarioServiceAPI.get(id);
+        if (tipoUsuario == null) {
+            throw new ResourceNotFoundException("Record not found for <TipoUsuario> " + id);
         }
-        return new ResponseEntity<TipoUsuario>(tipoUsuario, HttpStatus.OK); 
+        return ResponseEntity.ok(tipoUsuario);
     }
+
+
 }

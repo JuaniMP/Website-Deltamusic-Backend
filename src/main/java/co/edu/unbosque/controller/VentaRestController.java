@@ -1,53 +1,71 @@
 package co.edu.unbosque.controller;
 
-import co.edu.unbosque.entity.Venta; 
-import co.edu.unbosque.service.api.VentaServiceAPI; 
+import co.edu.unbosque.entity.Auditoria;
+import co.edu.unbosque.entity.Venta;
+import co.edu.unbosque.service.api.AuditoriaServiceAPI;
+import co.edu.unbosque.service.api.VentaServiceAPI;
 import co.edu.unbosque.utils.ResourceNotFoundException;
+import co.edu.unbosque.utils.Util;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
-//@CrossOrigin(origins = "http://localhost:8181",maxAge = 3600)
 @RestController
-@RequestMapping("/venta") 
-public class VentaRestController { 
+@RequestMapping("/venta")
+public class VentaRestController {
 
     @Autowired
-    private VentaServiceAPI ventaServiceAPI; 
+    private VentaServiceAPI ventaServiceAPI;
 
-    @GetMapping(value="/getAll")
-    //ResponseEntity List<Venta> getAll(){
-    public List<Venta> getAll(){
-        return ventaServiceAPI.getAll(); 
+    @Autowired
+    private AuditoriaServiceAPI auditoriaServiceAPI;
+
+    @GetMapping(value = "/getAll")
+    public List<Venta> getAll() {
+        return ventaServiceAPI.getAll();
     }
 
-    @PostMapping(value="/saveVenta") 
-    public ResponseEntity<Venta> save(@RequestBody Venta venta){ 
-        Venta obj = ventaServiceAPI.save(venta); 
-        return new ResponseEntity<Venta>(obj, HttpStatus.OK); // 200
-    }
+    @PostMapping(value = "/saveVenta")
+    public ResponseEntity<Venta> save(@RequestBody Venta venta, HttpServletRequest request) {
+        String accionAuditoria = "I"; // Por defecto inserción
 
-    @GetMapping(value="/findRecord/{id}")
-    public ResponseEntity<Venta> getVentaById(@PathVariable Long id) 
-            throws ResourceNotFoundException {
-        Venta venta = ventaServiceAPI.get(id); 
-        if (venta == null){
-            new ResourceNotFoundException("Record not found for <Venta>"+id); 
+        if (venta.getId() != null) {
+            Venta existente = ventaServiceAPI.get(venta.getId());
+            if (existente != null) {
+                accionAuditoria = "U"; // Actualización
+            }
         }
-        return ResponseEntity.ok().body(venta); 
+
+        Venta obj = ventaServiceAPI.save(venta);
+
+        Auditoria aud = new Auditoria();
+        aud.setTablaAccion("venta");
+        aud.setAccionAudtria(accionAuditoria);
+        aud.setUsrioAudtria("usuario"); // Cambiar por usuario autenticado real
+        aud.setIdTabla(obj.getId());
+        aud.setComentarioAudtria(
+            (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de venta con ID " + obj.getId()
+        );
+        aud.setFchaAudtria(new Date());
+        aud.setAddressAudtria(Util.getClientIp(request));
+
+        auditoriaServiceAPI.save(aud);
+
+        return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/deleteVenta/{id}") 
-    public ResponseEntity<Venta> delete(@PathVariable Long id){
-        Venta venta = ventaServiceAPI.get(id); 
-        if (venta != null){
-            ventaServiceAPI.delete(id); 
-        }else{
-            return new ResponseEntity<Venta>(venta, HttpStatus.INTERNAL_SERVER_ERROR); 
+    @GetMapping(value = "/findRecord/{id}")
+    public ResponseEntity<Venta> getVentaById(@PathVariable Long id) throws ResourceNotFoundException {
+        Venta venta = ventaServiceAPI.get(id);
+        if (venta == null) {
+            throw new ResourceNotFoundException("Record not found for <Venta> " + id);
         }
-        return new ResponseEntity<Venta>(venta, HttpStatus.OK); 
+        return ResponseEntity.ok().body(venta);
     }
+
 }

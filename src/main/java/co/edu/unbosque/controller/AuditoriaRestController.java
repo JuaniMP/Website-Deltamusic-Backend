@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -18,51 +17,26 @@ public class AuditoriaRestController {
     @Autowired
     private AuditoriaServiceAPI auditoriaServiceAPI;
 
-    @GetMapping("/getAll")
+    @GetMapping(value = "/getAll")
     public List<Auditoria> getAll() {
         return auditoriaServiceAPI.getAll();
     }
 
-    @PostMapping("/saveAuditoria")
-    public ResponseEntity<Auditoria> save(
-        @RequestParam String tablaAccion,
-        @RequestParam String accionAudtria,
-        @RequestParam String usuarioLogin,
-        @RequestParam int idTabla,
-        @RequestParam(required = false) String addressAudtria,
-        @RequestParam(required = false) String comentarioAudtria
-    ) {
-        Auditoria aud = new Auditoria();
-        aud.setTablaAccion(tablaAccion);
-        aud.setAccionAudtria(accionAudtria);
-        aud.setFchaAudtria(new Date());
-        aud.setUsrioAudtria(usuarioLogin);
-        aud.setIdTabla(idTabla);
-        aud.setAddressAudtria(addressAudtria);
-        aud.setComentarioAudtria(comentarioAudtria);
-
-        Auditoria obj = auditoriaServiceAPI.save(aud);
+    @PostMapping(value = "/saveAuditoria")
+    public ResponseEntity<Auditoria> save(@RequestBody Auditoria auditoria) {
+        Auditoria obj = auditoriaServiceAPI.save(auditoria);
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-
-    @GetMapping("/findRecord/{id}")
-    public ResponseEntity<Auditoria> getById(@PathVariable Long id) throws ResourceNotFoundException {
-        Auditoria entidad = auditoriaServiceAPI.get(id);
-        if (entidad == null) {
+    @GetMapping(value = "/findRecord/{id}")
+    public ResponseEntity<Auditoria> getAuditoriaById(@PathVariable Long id) throws ResourceNotFoundException {
+        Auditoria auditoria = auditoriaServiceAPI.get(id);
+        if (auditoria == null) {
             throw new ResourceNotFoundException("Record not found for <Auditoria> " + id);
         }
-        return ResponseEntity.ok(entidad);
+        return ResponseEntity.ok().body(auditoria);
     }
 
-    @DeleteMapping("/deleteAuditoria/{id}")
-    public ResponseEntity<Auditoria> delete(@PathVariable Long id) {
-        Auditoria entidad = auditoriaServiceAPI.get(id);
-        if (entidad != null) {
-            auditoriaServiceAPI.delete(id);
-            return new ResponseEntity<>(entidad, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(entidad, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }
+
+

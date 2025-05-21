@@ -3,6 +3,7 @@ package co.edu.unbosque.utils;
 import org.springframework.stereotype.Component;
 
 import co.edu.unbosque.entity.Usuario;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,5 +25,12 @@ public class Util {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error generando hash", e);
         }
+    }
+    public static String getClientIp(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0];
     }
 }

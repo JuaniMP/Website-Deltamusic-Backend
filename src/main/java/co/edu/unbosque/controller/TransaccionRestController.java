@@ -1,53 +1,73 @@
 package co.edu.unbosque.controller;
 
-import co.edu.unbosque.entity.Transaccion; 
-import co.edu.unbosque.service.api.TransaccionServiceAPI; 
+import co.edu.unbosque.entity.Auditoria;
+import co.edu.unbosque.entity.Transaccion;
+import co.edu.unbosque.service.api.AuditoriaServiceAPI;
+import co.edu.unbosque.service.api.TransaccionServiceAPI;
 import co.edu.unbosque.utils.ResourceNotFoundException;
+import co.edu.unbosque.utils.Util;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
-//@CrossOrigin(origins = "http://localhost:8181",maxAge = 3600)
 @RestController
-@RequestMapping("/transaccion") 
-public class TransaccionRestController { 
+@RequestMapping("/transaccion")
+public class TransaccionRestController {
 
     @Autowired
-    private TransaccionServiceAPI transaccionServiceAPI; 
+    private TransaccionServiceAPI transaccionServiceAPI;
 
-    @GetMapping(value="/getAll")
-    //ResponseEntity List<Transaccion> getAll(){
-    public List<Transaccion> getAll(){
-        return transaccionServiceAPI.getAll(); 
+    @Autowired
+    private AuditoriaServiceAPI auditoriaServiceAPI;
+
+    @GetMapping(value = "/getAll")
+    public List<Transaccion> getAll() {
+        return transaccionServiceAPI.getAll();
     }
 
-    @PostMapping(value="/saveTransaccion")
-    public ResponseEntity<Transaccion> save(@RequestBody Transaccion transaccion){ 
-        Transaccion obj = transaccionServiceAPI.save(transaccion); 
-        return new ResponseEntity<Transaccion>(obj, HttpStatus.OK); // 200
-    }
+    @PostMapping(value = "/saveTransaccion")
+    public ResponseEntity<Transaccion> save(@RequestBody Transaccion transaccion, HttpServletRequest request) {
+        String accionAuditoria = "I"; // Por defecto inserción
 
-    @GetMapping(value="/findRecord/{id}")
-    public ResponseEntity<Transaccion> getTransaccionById(@PathVariable Long id) 
-            throws ResourceNotFoundException {
-        Transaccion transaccion = transaccionServiceAPI.get(id); 
-        if (transaccion == null){
-            new ResourceNotFoundException("Record not found for <Transaccion>"+id); 
+        if (transaccion.getId() != null) {
+            Transaccion existente = transaccionServiceAPI.get(transaccion.getId());
+            if (existente != null) {
+                accionAuditoria = "U"; // Actualización
+            }
         }
-        return ResponseEntity.ok().body(transaccion); 
+
+        Transaccion obj = transaccionServiceAPI.save(transaccion);
+
+        Auditoria aud = new Auditoria();
+        aud.setTablaAccion("transaccion");
+        aud.setAccionAudtria(accionAuditoria);
+        aud.setUsrioAudtria("usuario"); // Cambiar por usuario autenticado real
+        aud.setIdTabla(obj.getId());
+        aud.setComentarioAudtria(
+            (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de transacción con ID " + obj.getId()
+        );
+        aud.setFchaAudtria(new Date());
+        aud.setAddressAudtria(Util.getClientIp(request));
+
+        auditoriaServiceAPI.save(aud);
+
+        return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/deleteTransaccion/{id}") 
-    public ResponseEntity<Transaccion> delete(@PathVariable Long id){
-        Transaccion transaccion = transaccionServiceAPI.get(id); 
-        if (transaccion != null){
-            transaccionServiceAPI.delete(id); 
-        }else{
-            return new ResponseEntity<Transaccion>(transaccion, HttpStatus.INTERNAL_SERVER_ERROR); 
+    @GetMapping(value = "/findRecord/{id}")
+    public ResponseEntity<Transaccion> getTransaccionById(@PathVariable Long id) throws ResourceNotFoundException {
+        Transaccion transaccion = transaccionServiceAPI.get(id);
+        if (transaccion == null) {
+            throw new ResourceNotFoundException("Record not found for <Transaccion> " + id);
         }
-        return new ResponseEntity<Transaccion>(transaccion, HttpStatus.OK); 
+        return ResponseEntity.ok().body(transaccion);
     }
+
+  
 }
+
