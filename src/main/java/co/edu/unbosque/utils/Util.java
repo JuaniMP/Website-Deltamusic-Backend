@@ -51,4 +51,16 @@ public class Util {
         }
         return xfHeader.split(",")[0];
     }
+    
+    public static String generarClaveTemporal() {
+        // Genera una clave aleatoria de 8 caracteres alfanuméricos
+        String alfabeto = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            int index = (int) (Math.random() * alfabeto.length());
+            sb.append(alfabeto.charAt(index));
+        }
+        return sb.toString();
+    }
+
 }

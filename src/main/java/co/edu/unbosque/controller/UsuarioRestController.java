@@ -20,6 +20,7 @@ import co.edu.unbosque.entity.Auditoria;
 import co.edu.unbosque.entity.Usuario;
 import co.edu.unbosque.service.api.AuditoriaServiceAPI;
 import co.edu.unbosque.service.api.UsuarioServiceAPI;
+import co.edu.unbosque.utils.EmailService;
 import co.edu.unbosque.utils.JwtUtil;
 import co.edu.unbosque.utils.LoginRequest;
 import co.edu.unbosque.utils.ResourceNotFoundException;
@@ -30,6 +31,9 @@ import co.edu.unbosque.utils.Util;
 @RestController
 @RequestMapping("/usuario")
 public class UsuarioRestController {
+	
+	@Autowired
+	private EmailService emailService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -145,4 +149,55 @@ public class UsuarioRestController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    
+    @PostMapping("/registro")
+    public ResponseEntity<?> registrarUsuario(@RequestBody Map<String, String> payload, HttpServletRequest request) {
+        String correo = payload.get("email").toLowerCase().trim();
+
+        // Validar si ya existe el usuario
+        Optional<Usuario> existente = usuarioServiceAPI.findByCorreoUsuario(correo);
+        if (existente.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Ya existe un usuario con ese correo.");
+        }
+
+        // Generar clave temporal
+        String claveTemporal = Util.generarClaveTemporal();
+
+        // Crear usuario
+        Usuario nuevoUsuario = new Usuario();
+        nuevoUsuario.setCorreoUsuario(correo);
+        nuevoUsuario.setLoginUsrio(correo);
+        nuevoUsuario.setClaveUsrio(utilidad.generarHash(nuevoUsuario, claveTemporal));
+        nuevoUsuario.setFchaUltmaClave(new Date());
+        nuevoUsuario.setEstado((byte)1); // Activo
+        nuevoUsuario.setIntentos(0);
+        nuevoUsuario.setIdTipoUsuario("2"); // Ajusta según tu sistema
+
+        usuarioServiceAPI.save(nuevoUsuario);
+
+        // ==============================
+        // AUDITORÍA REGISTRO
+        // ==============================
+        Auditoria aud = new Auditoria();
+        aud.setTablaAccion("usuario");
+        aud.setAccionAudtria("I");
+        aud.setUsrioAudtria("anonymus");
+        aud.setIdTabla(nuevoUsuario.getId());
+
+        // Mensaje de auditoría adaptado a máximo 60 caracteres
+        String prefix = "Registro usuario: ";
+        int maxCorreoLength = 60 - prefix.length();
+        String correoRecortado = correo.length() > maxCorreoLength ? correo.substring(0, maxCorreoLength - 3) + "..." : correo;
+        aud.setComentarioAudtria(prefix + correoRecortado);
+
+        aud.setFchaAudtria(new Date());
+        aud.setAddressAudtria(Util.getClientIp(request));
+        auditoriaServiceAPI.save(aud);
+
+        // Enviar correo
+        emailService.enviarClaveTemporal(correo, claveTemporal);
+
+        return ResponseEntity.ok("Registro exitoso. Revisa tu correo para la clave temporal.");
+    }
+
 }
