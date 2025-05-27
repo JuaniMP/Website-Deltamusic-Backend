@@ -53,50 +53,72 @@ public class UsuarioRestController {
     }
 
     @PostMapping("/saveUsuario")
-    public ResponseEntity<Usuario> save(@RequestBody Usuario usuario, HttpServletRequest request) {
-        // Normalizar login
-        String loginNormalizado = usuario.getLoginUsrio().toLowerCase().trim();
-        usuario.setLoginUsrio(loginNormalizado);
+    public ResponseEntity<?> save(@RequestBody Usuario usuario, HttpServletRequest request) {
+        // Normalizar campos clave
+        String correoNorm = usuario.getCorreoUsuario().toLowerCase().trim();
+        String loginNorm  = usuario.getLoginUsrio() != null
+                            ? usuario.getLoginUsrio().toLowerCase().trim()
+                            : correoNorm;
+        usuario.setCorreoUsuario(correoNorm);
+        usuario.setLoginUsrio(loginNorm);
 
-        // Generar hash de la clave
-        usuario.setClaveUsrio(utilidad.generarHash(usuario, usuario.getClaveUsrio()));
+        // Verificar duplicado SOLO en registro nuevo
+        boolean esNuevo = (usuario.getId() == null);
+        if (esNuevo) {
+            if (usuarioServiceAPI.findByCorreoUsuario(correoNorm).isPresent()) {
+                // Ya existe un usuario con este correo
+                return ResponseEntity
+                        .status(HttpStatus.CONFLICT)
+                        .body("El correo " + correoNorm + " ya está registrado.");
+            }
+        }
 
         // Fecha de última clave
         if (usuario.getFchaUltmaClave() == null) {
             usuario.setFchaUltmaClave(new Date());
         }
 
-        // Determinar acción de auditoría
-        String accionAuditoria = "I";
-        if (usuario.getId() != null && usuarioServiceAPI.get(usuario.getId()) != null) {
-            accionAuditoria = "U";
+        // Generar hash de la clave
+        String claveTemporal = null;
+        if (esNuevo) {
+            claveTemporal = Util.generarClaveTemporal();
+            usuario.setClaveUsrio(utilidad.generarHash(usuario, claveTemporal));
+            usuario.setIntentos(0);
+            usuario.setEstado((byte)1);
+            usuario.setIdTipoUsuario("2");
+        } else {
+            usuario.setClaveUsrio(utilidad.generarHash(usuario, usuario.getClaveUsrio()));
         }
 
+        // Guardar usuario
         Usuario obj = usuarioServiceAPI.save(usuario);
 
-        // Crear auditoría
+        // Auditoría
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("usuario");
-        aud.setAccionAudtria(accionAuditoria);
-
-        // Extraer usuario autenticado del token
-        String usernameAud = "anonymous";
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            usernameAud = jwtUtil.getLoginFromToken(token);
-        }
-        aud.setUsrioAudtria(usernameAud);
-
+        aud.setAccionAudtria(esNuevo ? "I" : "U");
+        aud.setUsrioAudtria("anonymous");
         aud.setIdTabla(obj.getId());
-        aud.setComentarioAudtria((accionAuditoria.equals("I") ? "Creación" : "Actualización")
-                + " de usuario con ID " + obj.getId());
+        String prefix = esNuevo ? "Registro usuario: " : "Actualización usuario: ";
+        String ident = correoNorm;
+        int maxLen = 60 - prefix.length();
+        String idRec = ident.length() > maxLen
+                      ? ident.substring(0, maxLen - 3) + "..."
+                      : ident;
+        aud.setComentarioAudtria(prefix + idRec);
         aud.setFchaAudtria(new Date());
         aud.setAddressAudtria(Util.getClientIp(request));
         auditoriaServiceAPI.save(aud);
 
-        return new ResponseEntity<>(obj, HttpStatus.OK);
+        // Envío de correo en registro
+        if (esNuevo && claveTemporal != null) {
+            emailService.enviarClaveTemporal(correoNorm, claveTemporal);
+            return ResponseEntity.ok("Registro exitoso. Revisa tu correo para la clave temporal.");
+        } else {
+            return ResponseEntity.ok("Actualización exitosa.");
+        }
     }
+
 
     @GetMapping("/findRecord/{id}")
     public ResponseEntity<Usuario> getUsuarioById(@PathVariable Long id) throws ResourceNotFoundException {
@@ -150,54 +172,8 @@ public class UsuarioRestController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
-    @PostMapping("/registro")
-    public ResponseEntity<?> registrarUsuario(@RequestBody Map<String, String> payload, HttpServletRequest request) {
-        String correo = payload.get("email").toLowerCase().trim();
 
-        // Validar si ya existe el usuario
-        Optional<Usuario> existente = usuarioServiceAPI.findByCorreoUsuario(correo);
-        if (existente.isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Ya existe un usuario con ese correo.");
-        }
 
-        // Generar clave temporal
-        String claveTemporal = Util.generarClaveTemporal();
-
-        // Crear usuario
-        Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setCorreoUsuario(correo);
-        nuevoUsuario.setLoginUsrio(correo);
-        nuevoUsuario.setClaveUsrio(utilidad.generarHash(nuevoUsuario, claveTemporal));
-        nuevoUsuario.setFchaUltmaClave(new Date());
-        nuevoUsuario.setEstado((byte)1); // Activo
-        nuevoUsuario.setIntentos(0);
-        nuevoUsuario.setIdTipoUsuario("2"); // Ajusta según tu sistema
-
-        usuarioServiceAPI.save(nuevoUsuario);
-
-        // ==============================
-        // AUDITORÍA REGISTRO
-        // ==============================
-        Auditoria aud = new Auditoria();
-        aud.setTablaAccion("usuario");
-        aud.setAccionAudtria("I");
-        aud.setUsrioAudtria("anonymus");
-        aud.setIdTabla(nuevoUsuario.getId());
-
-        // Mensaje de auditoría adaptado a máximo 60 caracteres
-        String prefix = "Registro usuario: ";
-        int maxCorreoLength = 60 - prefix.length();
-        String correoRecortado = correo.length() > maxCorreoLength ? correo.substring(0, maxCorreoLength - 3) + "..." : correo;
-        aud.setComentarioAudtria(prefix + correoRecortado);
-
-        aud.setFchaAudtria(new Date());
-        aud.setAddressAudtria(Util.getClientIp(request));
-        auditoriaServiceAPI.save(aud);
-
-        // Enviar correo
-        emailService.enviarClaveTemporal(correo, claveTemporal);
-
-        return ResponseEntity.ok("Registro exitoso. Revisa tu correo para la clave temporal.");
-    }
+    
 
 }
