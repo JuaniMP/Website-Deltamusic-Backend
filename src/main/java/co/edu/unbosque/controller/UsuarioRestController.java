@@ -172,6 +172,45 @@ public class UsuarioRestController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
+    @PostMapping("/forgot")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> payload, HttpServletRequest request) {
+        String correo = payload.get("email").toLowerCase().trim();
+
+        Optional<Usuario> userOpt = usuarioServiceAPI.findByCorreoUsuario(correo);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("El correo no está registrado en el sistema.");
+        }
+
+        Usuario user = userOpt.get();
+
+        // Generar nueva clave temporal y guardarla (hasheada)
+        String nuevaClave = Util.generarClaveTemporal();
+        user.setClaveUsrio(utilidad.generarHash(user, nuevaClave));
+        user.setFchaUltmaClave(new Date());
+        usuarioServiceAPI.save(user);
+
+      
+        Auditoria aud = new Auditoria();
+        aud.setTablaAccion("usuario");
+        aud.setAccionAudtria("R"); 
+        aud.setUsrioAudtria("anonymous");
+        aud.setIdTabla(user.getId());
+        String prefix = "Recuperación clave usuario: ";
+        int maxLen = 60 - prefix.length();
+        String correoRec = correo.length() > maxLen ? correo.substring(0, maxLen - 3) + "..." : correo;
+        aud.setComentarioAudtria(prefix + correoRec);
+        aud.setFchaAudtria(new Date());
+        aud.setAddressAudtria(Util.getClientIp(request));
+        auditoriaServiceAPI.save(aud);
+
+        // Enviar el correo
+        emailService.enviarRecuperacionClave(correo, nuevaClave);
+
+        return ResponseEntity.ok("Se ha enviado una nueva clave temporal a tu correo.");
+    }
+
+    
 
 
     

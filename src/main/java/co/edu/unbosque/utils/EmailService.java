@@ -20,4 +20,19 @@ public class EmailService {
 
         mailSender.send(mensaje);
     }
+    
+    public void enviarRecuperacionClave(String destinatario, String claveTemporal) {
+        SimpleMailMessage mensaje = new SimpleMailMessage();
+        mensaje.setTo(destinatario);
+        mensaje.setSubject("Recuperación de contraseña");
+        mensaje.setText(
+            "Hola,\n\n"
+            + "Hemos recibido una solicitud para restablecer tu contraseña.\n"
+            + "Tu nueva clave temporal es: " + claveTemporal + "\n\n"
+            + "Te recomendamos cambiarla después de iniciar sesión.\n"
+            + "\nSi no solicitaste este cambio, puedes ignorar este correo."
+        );
+        mailSender.send(mensaje);
+    }
+
 }
