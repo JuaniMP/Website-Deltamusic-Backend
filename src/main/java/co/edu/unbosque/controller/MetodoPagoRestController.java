@@ -4,9 +4,12 @@ import co.edu.unbosque.entity.Auditoria;
 import co.edu.unbosque.entity.MetodoPago;
 import co.edu.unbosque.service.api.AuditoriaServiceAPI;
 import co.edu.unbosque.service.api.MetodoPagoServiceAPI;
+import co.edu.unbosque.utils.JwtUtil;
 import co.edu.unbosque.utils.ResourceNotFoundException;
 import co.edu.unbosque.utils.Util;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
 
+@CrossOrigin(origins = "*")
+@Slf4j
 @RestController
 @RequestMapping("/metodo_pago")
 public class MetodoPagoRestController {
@@ -24,6 +29,9 @@ public class MetodoPagoRestController {
 
     @Autowired
     private AuditoriaServiceAPI auditoriaServiceAPI;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/getAll")
     public List<MetodoPago> getAll() {
@@ -43,10 +51,12 @@ public class MetodoPagoRestController {
 
         MetodoPago obj = metodoPagoServiceAPI.save(metodoPago);
 
+        String correoUsuario = getCorreoFromRequest(request);
+
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("metodo_pago");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria("usuario"); // Cambiar por usuario autenticado real
+        aud.setUsrioAudtria(correoUsuario); // correo real del usuario autenticado
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de método de pago con ID " + obj.getId()
@@ -74,10 +84,12 @@ public class MetodoPagoRestController {
         if (entidad != null) {
             metodoPagoServiceAPI.delete(id);
 
+            String correoUsuario = getCorreoFromRequest(request);
+
             Auditoria aud = new Auditoria();
             aud.setTablaAccion("metodo_pago");
             aud.setAccionAudtria("D");
-            aud.setUsrioAudtria("usuario"); // Cambiar por usuario autenticado real
+            aud.setUsrioAudtria(correoUsuario); // correo real del usuario autenticado
             aud.setIdTabla(id);
             aud.setComentarioAudtria("Eliminación de método de pago con ID " + id);
             aud.setFchaAudtria(new Date());
@@ -89,5 +101,15 @@ public class MetodoPagoRestController {
         } else {
             return new ResponseEntity<>(entidad, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // --------- MÉTODO UTILITARIO ---------
+    private String getCorreoFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.replace("Bearer ", "");
+            return jwtUtil.extractUsername(token);
+        }
+        return "desconocido";
     }
 }

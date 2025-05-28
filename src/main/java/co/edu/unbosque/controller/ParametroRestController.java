@@ -4,9 +4,12 @@ import co.edu.unbosque.entity.Auditoria;
 import co.edu.unbosque.entity.Parametro;
 import co.edu.unbosque.service.api.AuditoriaServiceAPI;
 import co.edu.unbosque.service.api.ParametroServiceAPI;
+import co.edu.unbosque.utils.JwtUtil;
 import co.edu.unbosque.utils.ResourceNotFoundException;
 import co.edu.unbosque.utils.Util;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
 
+@CrossOrigin(origins = "*")
+@Slf4j
 @RestController
 @RequestMapping("/parametro")
 public class ParametroRestController {
@@ -24,6 +29,9 @@ public class ParametroRestController {
 
     @Autowired
     private AuditoriaServiceAPI auditoriaServiceAPI;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping(value = "/getAll")
     public List<Parametro> getAll() {
@@ -43,13 +51,15 @@ public class ParametroRestController {
 
         Parametro obj = parametroServiceAPI.save(parametro);
 
+        String correoUsuario = getCorreoFromRequest(request);
+
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("parametro");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria("usuario"); // Cambiar por usuario real autenticado
+        aud.setUsrioAudtria(correoUsuario); // correo real autenticado
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
-                (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de parámetro con ID " + obj.getId()
+            (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de parámetro con ID " + obj.getId()
         );
         aud.setFchaAudtria(new Date());
         aud.setAddressAudtria(Util.getClientIp(request));
@@ -74,10 +84,12 @@ public class ParametroRestController {
         if (parametro != null) {
             parametroServiceAPI.delete(id);
 
+            String correoUsuario = getCorreoFromRequest(request);
+
             Auditoria aud = new Auditoria();
             aud.setTablaAccion("parametro");
             aud.setAccionAudtria("D");
-            aud.setUsrioAudtria("usuario"); // Cambiar por usuario real autenticado
+            aud.setUsrioAudtria(correoUsuario); // correo real autenticado
             aud.setIdTabla(id);
             aud.setComentarioAudtria("Eliminación de parámetro con ID " + id);
             aud.setFchaAudtria(new Date());
@@ -89,5 +101,15 @@ public class ParametroRestController {
         } else {
             return new ResponseEntity<>(parametro, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // --------- MÉTODO UTILITARIO ---------
+    private String getCorreoFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.replace("Bearer ", "");
+            return jwtUtil.extractUsername(token);
+        }
+        return "desconocido";
     }
 }
