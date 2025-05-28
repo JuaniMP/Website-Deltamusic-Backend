@@ -28,6 +28,7 @@ public class Producto implements Serializable {
 	@Column(name="estado")
 	private byte estado;
 
+	@Column(name="existencia")
 	private int existencia;
 
 	@Column(name="foto_producto")
