@@ -155,25 +155,44 @@ public class UsuarioRestController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
+ // src/main/java/co/edu/unbosque/controller/UsuarioRestController.java
     @PostMapping("/forgot")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> payload, HttpServletRequest request) {
-        String correo = payload.get("email").toLowerCase().trim();
+    public ResponseEntity<?> forgotPassword(
+            @RequestBody Map<String, String> payload,
+            HttpServletRequest request) {
 
+        // 1) Intentar leer primero "correoUsuario", si no viene, "email"
+        String correoRaw = payload.get("correoUsuario");
+        if (correoRaw == null) {
+            correoRaw = payload.get("email");
+        }
+
+        // 2) Validar que venga algo
+        if (correoRaw == null || correoRaw.isBlank()) {
+            return ResponseEntity
+                .badRequest()
+                .body("Debes enviar 'correoUsuario' o 'email' con un valor válido.");
+        }
+
+        // 3) Normalizar correo
+        String correo = correoRaw.toLowerCase().trim();
+
+        // 4) Comprobar existencia de usuario
         Optional<Usuario> userOpt = usuarioServiceAPI.findByCorreoUsuario(correo);
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .body("El correo no está registrado en el sistema.");
         }
-        
         Usuario user = userOpt.get();
 
-        // Generar nueva clave temporal y guardarla (hasheada)
+        // 5) Generar y guardar nueva clave temporal (hasheada)
         String nuevaClave = Util.generarClaveTemporal();
         user.setClaveUsrio(utilidad.generarHash(user, nuevaClave));
         user.setFchaUltmaClave(new Date());
         usuarioServiceAPI.save(user);
 
-        // AUDITORÍA - correo real del usuario
+        // 6) Registrar auditoría
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("usuario");
         aud.setAccionAudtria("R");
@@ -186,10 +205,13 @@ public class UsuarioRestController {
         aud.setAddressAudtria(Util.getClientIp(request));
         auditoriaServiceAPI.save(aud);
 
-        // Enviar el correo
+        // 7) Enviar el correo con la nueva clave
         emailService.enviarRecuperacionClave(correo, nuevaClave);
 
-        return ResponseEntity.ok("Se ha enviado una nueva clave temporal a tu correo.");
+        // 8) Responder OK
+        return ResponseEntity
+            .ok("Se ha enviado una nueva clave temporal a tu correo.");
     }
+
 
 }
