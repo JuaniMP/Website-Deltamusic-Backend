@@ -3,6 +3,7 @@ package co.edu.unbosque.entity;
 import java.io.Serializable;
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -13,6 +14,9 @@ import java.util.Date;
 @Table(name="venta")
 public class Venta implements Serializable {
 	private static final long serialVersionUID = 1L;
+	
+	@OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	private List<DetalleVenta> detalles;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +41,14 @@ public class Venta implements Serializable {
 
 	@Column(name="valor_venta")
 	private int valorVenta;
+	
+	public List<DetalleVenta> getDetalles() {
+	    return detalles;
+	}
+
+	public void setDetalles(List<DetalleVenta> detalles) {
+	    this.detalles = detalles;
+	}
 
 	public Venta() {
 	}

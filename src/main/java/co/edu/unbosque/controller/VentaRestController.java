@@ -1,8 +1,12 @@
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
+import co.edu.unbosque.entity.DetalleVenta;
+import co.edu.unbosque.entity.Producto;
 import co.edu.unbosque.entity.Venta;
 import co.edu.unbosque.service.api.AuditoriaServiceAPI;
+import co.edu.unbosque.service.api.DetalleVentaServiceAPI;
+import co.edu.unbosque.service.api.ProductoServiceAPI;
 import co.edu.unbosque.service.api.VentaServiceAPI;
 import co.edu.unbosque.utils.JwtUtil;
 import co.edu.unbosque.utils.ResourceNotFoundException;
@@ -26,12 +30,19 @@ public class VentaRestController {
 
     @Autowired
     private VentaServiceAPI ventaServiceAPI;
+    
+    @Autowired
+    private DetalleVentaServiceAPI detalleVentaServiceAPI;
 
     @Autowired
     private AuditoriaServiceAPI auditoriaServiceAPI;
 
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private ProductoServiceAPI productoServiceAPI;
+
 
     @GetMapping(value = "/getAll")
     public List<Venta> getAll() {
@@ -39,8 +50,54 @@ public class VentaRestController {
     }
 
     @PostMapping(value = "/saveVenta")
-    public ResponseEntity<Venta> save(@RequestBody Venta venta, HttpServletRequest request) {
+    public ResponseEntity<?> save(@RequestBody Venta venta, HttpServletRequest request) {
         String accionAuditoria = "I"; // Por defecto inserción
+
+        // Validación: Máximo 3 productos por día por cliente
+        int productosYaComprados = detalleVentaServiceAPI.totalProductosClientePorFecha(
+                venta.getIdCliente(), venta.getFechaVenta()
+        );
+
+        // Suma la cantidad de productos que intenta comprar en esta venta
+        int cantidadEnEstaVenta = 0;
+        java.math.BigDecimal totalVenta = java.math.BigDecimal.ZERO;
+
+        if (venta.getDetalles() != null) {
+            for (DetalleVenta detalle : venta.getDetalles()) {
+                cantidadEnEstaVenta += detalle.getCantComp();
+
+                // Obtén el producto para el precio actual
+                Producto producto = productoServiceAPI.get((long) detalle.getIdProducto());
+                if (producto != null) {
+                    // Asigna el precio actual al detalle
+                    detalle.setValorUnit(producto.getPrecioVentaActual().intValue());
+                    // Puedes calcular IVA y descuentos aquí si quieres
+                    // detalle.setValorIva(...);
+                    // detalle.setValorDscto(...);
+
+                    // Suma al total de la venta
+                    totalVenta = totalVenta.add(producto.getPrecioVentaActual()
+                        .multiply(java.math.BigDecimal.valueOf(detalle.getCantComp())));
+                } else {
+                    // Si el producto no existe, rechaza la venta
+                    return ResponseEntity
+                            .status(HttpStatus.BAD_REQUEST)
+                            .body("Producto con ID " + detalle.getIdProducto() + " no existe.");
+                }
+
+                // Relación de cascada: asocia el detalle con la venta
+                detalle.setVenta(venta);
+            }
+        }
+
+        if ((productosYaComprados + cantidadEnEstaVenta) > 3) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Solo puedes comprar máximo 3 productos por día.");
+        }
+
+        // Guarda el total calculado
+        venta.setValorVenta(totalVenta.intValue());
 
         if (venta.getId() != null) {
             Venta existente = ventaServiceAPI.get(venta.getId());
@@ -68,6 +125,7 @@ public class VentaRestController {
 
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
+
 
     @GetMapping(value = "/findRecord/{id}")
     public ResponseEntity<Venta> getVentaById(@PathVariable Long id) throws ResourceNotFoundException {

@@ -3,40 +3,50 @@ package co.edu.unbosque.entity;
 import java.io.Serializable;
 import jakarta.persistence.*;
 
-
 /**
  * The persistent class for the detalle_venta database table.
  * 
  */
 @Entity
-@Table(name="detalle_venta")
+@Table(name = "detalle_venta")
 public class DetalleVenta implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name="id", nullable=false)
+	@Column(name = "id", nullable = false)
 	private Long id;
 
-	@Column(name="cant_comp")
+	@Column(name = "cant_comp")
 	private int cantComp;
 
-	@Column(name="id_producto")
+	@Column(name = "id_producto")
 	private short idProducto;
 
-	@Column(name="id_venta")
-	private int idVenta;
+	@ManyToOne
+	@JoinColumn(name = "id_venta", referencedColumnName = "id")
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	private Venta venta;
 
-	@Column(name="valor_dscto")
+
+	@Column(name = "valor_dscto")
 	private int valorDscto;
 
-	@Column(name="valor_iva")
+	@Column(name = "valor_iva")
 	private int valorIva;
 
-	@Column(name="valor_unit")
+	@Column(name = "valor_unit")
 	private int valorUnit;
 
 	public DetalleVenta() {
+	}
+
+	public Venta getVenta() {
+		return venta;
+	}
+
+	public void setVenta(Venta venta) {
+		this.venta = venta;
 	}
 
 	public Long getId() {
@@ -61,14 +71,6 @@ public class DetalleVenta implements Serializable {
 
 	public void setIdProducto(short idProducto) {
 		this.idProducto = idProducto;
-	}
-
-	public int getIdVenta() {
-		return this.idVenta;
-	}
-
-	public void setIdVenta(int idVenta) {
-		this.idVenta = idVenta;
 	}
 
 	public int getValorDscto() {

@@ -1,5 +1,7 @@
 package co.edu.unbosque.service.impl;
 
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
@@ -18,5 +20,9 @@ public class DetalleVentaServiceImpl extends GenericServiceImpl<DetalleVenta, Lo
     @Override
     public CrudRepository<DetalleVenta, Long> getDao() {
         return detalleVentaRepository;
+    }
+    
+    public int totalProductosClientePorFecha(int idCliente, Date fechaVenta) {
+        return detalleVentaRepository.totalProductosClientePorFecha(idCliente, fechaVenta);
     }
 }
