@@ -2,12 +2,21 @@ package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
 import co.edu.unbosque.entity.DetalleVenta;
+import co.edu.unbosque.entity.MetodoPago;
+import co.edu.unbosque.entity.Parametro;
 import co.edu.unbosque.entity.Producto;
+import co.edu.unbosque.entity.Transaccion;
+import co.edu.unbosque.entity.Usuario;
 import co.edu.unbosque.entity.Venta;
 import co.edu.unbosque.service.api.AuditoriaServiceAPI;
 import co.edu.unbosque.service.api.DetalleVentaServiceAPI;
+import co.edu.unbosque.service.api.MetodoPagoServiceAPI;
+import co.edu.unbosque.service.api.ParametroServiceAPI;
 import co.edu.unbosque.service.api.ProductoServiceAPI;
+import co.edu.unbosque.service.api.TransaccionServiceAPI;
+import co.edu.unbosque.service.api.UsuarioServiceAPI;
 import co.edu.unbosque.service.api.VentaServiceAPI;
+import co.edu.unbosque.utils.EmailService;
 import co.edu.unbosque.utils.JwtUtil;
 import co.edu.unbosque.utils.ResourceNotFoundException;
 import co.edu.unbosque.utils.Util;
@@ -32,6 +41,21 @@ public class VentaRestController {
     private VentaServiceAPI ventaServiceAPI;
     
     @Autowired
+    private EmailService emailService;
+    
+    @Autowired
+    private UsuarioServiceAPI usuarioServiceAPI;
+    
+    @Autowired
+    private ParametroServiceAPI parametroServiceAPI;
+    
+    @Autowired
+    private MetodoPagoServiceAPI metodoPagoServiceAPI;
+    
+    @Autowired
+    private TransaccionServiceAPI transaccionServiceAPI;
+    
+    @Autowired
     private DetalleVentaServiceAPI detalleVentaServiceAPI;
 
     @Autowired
@@ -50,42 +74,67 @@ public class VentaRestController {
     }
 
     @PostMapping(value = "/saveVenta")
-    public ResponseEntity<?> save(@RequestBody Venta venta, HttpServletRequest request) {
+    public ResponseEntity<?> save(@RequestBody VentaRequest ventaRequest, HttpServletRequest request) {
+        // Validación del DTO y sus campos
+        if (ventaRequest == null || ventaRequest.venta == null || ventaRequest.transaccion == null) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Debe enviar tanto la venta como la transacción.");
+        }
+
+        Venta venta = ventaRequest.venta;
+        Transaccion transaccion = ventaRequest.transaccion;
         String accionAuditoria = "I"; // Por defecto inserción
 
-        // Validación: Máximo 3 productos por día por cliente
+        // 1. Obtener el IVA desde la tabla de parámetros (activo)
+        Parametro ivaParametro = parametroServiceAPI.findByDescripcionAndEstado("IVA", (byte)1);
+        if (ivaParametro == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("No se encontró el parámetro de IVA en la base de datos");
+        }
+        int porcentajeIva = ivaParametro.getValorNumero(); // Ej: 19
+        venta.setValorIva(porcentajeIva); // Guarda el porcentaje en la venta
+        double ivaDecimal = porcentajeIva / 100.0;
+
+        // 2. Validar máximo 3 productos por día
         int productosYaComprados = detalleVentaServiceAPI.totalProductosClientePorFecha(
-                venta.getIdCliente(), venta.getFechaVenta()
+            venta.getIdCliente(), venta.getFechaVenta()
         );
 
-        // Suma la cantidad de productos que intenta comprar en esta venta
+        // 3. Procesar detalles y calcular totales
         int cantidadEnEstaVenta = 0;
         java.math.BigDecimal totalVenta = java.math.BigDecimal.ZERO;
+        int totalIvaVenta = 0;
+        List<Producto> productosCorreo = new java.util.ArrayList<>();
+        List<DetalleVenta> detallesCorreo = new java.util.ArrayList<>();
 
         if (venta.getDetalles() != null) {
             for (DetalleVenta detalle : venta.getDetalles()) {
                 cantidadEnEstaVenta += detalle.getCantComp();
-
-                // Obtén el producto para el precio actual
                 Producto producto = productoServiceAPI.get((long) detalle.getIdProducto());
                 if (producto != null) {
-                    // Asigna el precio actual al detalle
-                    detalle.setValorUnit(producto.getPrecioVentaActual().intValue());
-                    // Puedes calcular IVA y descuentos aquí si quieres
-                    // detalle.setValorIva(...);
-                    // detalle.setValorDscto(...);
+                    productosCorreo.add(producto);
+                    detallesCorreo.add(detalle);
 
-                    // Suma al total de la venta
-                    totalVenta = totalVenta.add(producto.getPrecioVentaActual()
-                        .multiply(java.math.BigDecimal.valueOf(detalle.getCantComp())));
+                    int precioUnit = producto.getPrecioVentaActual().intValue();
+                    int subtotal = precioUnit * detalle.getCantComp();
+
+                    int ivaDetalle = 0;
+                    if (producto.getTieneIva() == 1) {
+                        ivaDetalle = (int) Math.round(subtotal * ivaDecimal);
+                    }
+                    detalle.setValorUnit(precioUnit);
+                    detalle.setValorIva(ivaDetalle);
+
+                    totalVenta = totalVenta.add(producto.getPrecioVentaActual().multiply(
+                        java.math.BigDecimal.valueOf(detalle.getCantComp())
+                    ));
+                    totalIvaVenta += ivaDetalle;
                 } else {
-                    // Si el producto no existe, rechaza la venta
                     return ResponseEntity
-                            .status(HttpStatus.BAD_REQUEST)
-                            .body("Producto con ID " + detalle.getIdProducto() + " no existe.");
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body("Producto con ID " + detalle.getIdProducto() + " no existe.");
                 }
-
-                // Relación de cascada: asocia el detalle con la venta
                 detalle.setVenta(venta);
             }
         }
@@ -96,8 +145,8 @@ public class VentaRestController {
                 .body("Solo puedes comprar máximo 3 productos por día.");
         }
 
-        // Guarda el total calculado
         venta.setValorVenta(totalVenta.intValue());
+        venta.setValorIva(totalIvaVenta);
 
         if (venta.getId() != null) {
             Venta existente = ventaServiceAPI.get(venta.getId());
@@ -106,25 +155,61 @@ public class VentaRestController {
             }
         }
 
+        // Guarda la venta
         Venta obj = ventaServiceAPI.save(venta);
 
-        String correoUsuario = getCorreoFromRequest(request);
+        // --- PROCESAR TRANSACCIÓN ---
+        // Validar método de pago
+        MetodoPago metodoPago = metodoPagoServiceAPI.get((long) transaccion.getIdMetodoPago());
+        if (metodoPago == null) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Método de pago no válido.");
+        }
 
+        // Asocia la venta a la transacción
+        transaccion.setIdCompra(obj.getId().intValue());
+        transaccion.setValorTx(obj.getValorVenta() + obj.getValorIva());
+        transaccion.setFechaHora(new java.util.Date());
+        // Puedes asignar otros datos si quieres...
+
+        Transaccion transaccionGuardada = transaccionServiceAPI.save(transaccion);
+
+        // Auditoría
+        String correoUsuario = getCorreoFromRequest(request);
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("venta");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // Correo autenticado real
+        aud.setUsrioAudtria(correoUsuario);
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de venta con ID " + obj.getId()
         );
         aud.setFchaAudtria(new Date());
         aud.setAddressAudtria(Util.getClientIp(request));
-
         auditoriaServiceAPI.save(aud);
+
+        // --- Enviar correo de resumen de compra al usuario ---
+        Usuario usuario = usuarioServiceAPI.get((long) venta.getIdCliente());
+        if (usuario != null) {
+            String nombreCliente = usuario.getLoginUsrio();
+            emailService.enviarResumenCompra(
+                usuario.getCorreoUsuario(),
+                nombreCliente,
+                obj, // venta guardada
+                detallesCorreo,
+                productosCorreo,
+                transaccionGuardada,
+                metodoPago
+            );
+        }
 
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
+
+
+
+
 
 
     @GetMapping(value = "/findRecord/{id}")
@@ -145,4 +230,11 @@ public class VentaRestController {
         }
         return "desconocido";
     }
+    
+ // Puedes ponerlo como clase interna o archivo aparte
+    public static class VentaRequest {
+        public Venta venta;
+        public Transaccion transaccion;
+    }
+
 }
