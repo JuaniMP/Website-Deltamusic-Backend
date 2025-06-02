@@ -39,8 +39,22 @@ public class ProductoRestController {
     }
 
     @PostMapping(value = "/saveProducto")
-    public ResponseEntity<Producto> save(@RequestBody Producto producto, HttpServletRequest request) {
+    public ResponseEntity<?> save(@RequestBody Producto producto, HttpServletRequest request) {
         String accionAuditoria = "I"; // Por defecto inserción
+
+        // Validar que existencia nunca sea mayor a stock_maximo ni negativa
+        if (producto.getExistencia() < 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("La existencia no puede ser negativa.");
+        }
+        if (producto.getStockMaximo() < 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("El stock máximo no puede ser negativo.");
+        }
+        if (producto.getExistencia() > producto.getStockMaximo()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("La existencia no puede ser mayor al stock máximo.");
+        }
 
         if (producto.getId() != null) {
             Producto existente = productoServiceAPI.get(producto.getId());
@@ -69,14 +83,6 @@ public class ProductoRestController {
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/findRecord/{id}")
-    public ResponseEntity<Producto> getProductoById(@PathVariable Long id) throws ResourceNotFoundException {
-        Producto producto = productoServiceAPI.get(id);
-        if (producto == null) {
-            throw new ResourceNotFoundException("Record not found for <Producto> " + id);
-        }
-        return ResponseEntity.ok().body(producto);
-    }
 
     @DeleteMapping(value = "/deleteProducto/{id}")
     public ResponseEntity<Producto> delete(@PathVariable Long id, HttpServletRequest request) {

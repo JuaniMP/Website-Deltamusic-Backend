@@ -6,10 +6,6 @@ import java.util.Date;
 import java.util.List;
 
 
-/**
- * The persistent class for the venta database table.
- * 
- */
 @Entity
 @Table(name="venta")
 public class Venta implements Serializable {

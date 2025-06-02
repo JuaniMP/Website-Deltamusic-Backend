@@ -1,5 +1,8 @@
 package co.edu.unbosque.utils;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +55,12 @@ public class EmailService {
     	    Transaccion transaccion,
     	    MetodoPago metodoPago
     	) {
+    	SimpleDateFormat formato = new SimpleDateFormat("dd 'de' MMMM 'de' yyyy, hh:mm a", new Locale("es", "CO"));
+
     	    StringBuilder cuerpo = new StringBuilder();
     	    cuerpo.append("¡Hola ").append(nombreCliente).append("!\n\n");
     	    cuerpo.append("Gracias por tu compra en Delta Music. Aquí tienes el resumen de tu pedido:\n\n");
-    	    cuerpo.append("Fecha de la compra: ").append(venta.getFechaVenta()).append("\n");
+    	    cuerpo.append("Fecha de la compra: ").append(formato.format(venta.getFechaVenta())).append("\n");
     	    cuerpo.append("ID de la venta: ").append(venta.getId()).append("\n\n");
     	    cuerpo.append("Productos:\n");
     	    cuerpo.append(String.format("%-25s %-10s %-12s %-10s\n", "Nombre", "Cantidad", "V. Unitario", "Subtotal"));
@@ -84,7 +89,7 @@ public class EmailService {
     	    cuerpo.append("---- Datos de la transacción ----\n");
     	    if (transaccion != null && metodoPago != null) {
     	        cuerpo.append("ID Transacción: ").append(transaccion.getId()).append("\n");
-    	        cuerpo.append("Fecha y hora: ").append(transaccion.getFechaHora()).append("\n");
+    	        cuerpo.append("Fecha y hora: ").append(formato.format(transaccion.getFechaHora())).append("\n");
     	        cuerpo.append("Banco: ").append(transaccion.getIdBanco() != null ? transaccion.getIdBanco() : "N/A").append("\n");
     	        cuerpo.append("Método de pago: ").append(metodoPago.getDescripcion()).append("\n");
     	        cuerpo.append("Valor pagado: ").append(transaccion.getValorTx()).append(" COP\n");

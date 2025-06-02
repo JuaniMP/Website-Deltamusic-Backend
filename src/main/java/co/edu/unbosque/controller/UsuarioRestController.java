@@ -124,15 +124,39 @@ public class UsuarioRestController {
         }
         Usuario user = userOpt.get();
 
+        // 1. Verificar si está bloqueado (solo aplica a tipo usuario 2)
+        if ("2".equals(user.getIdTipoUsuario()) && user.getEstado() == 0) {
+            return new ResponseEntity<>("Cuenta bloqueada. Debes recuperar tu contraseña.", HttpStatus.FORBIDDEN);
+        }
+
         String claveUsuario = utilidad.generarHash(user, loginRequest.getClave());
 
+        // 2. Validar contraseña
         if (!user.getClaveUsrio().equals(claveUsuario)) {
-            user.setIntentos(user.getIntentos() + 1);
-            usuarioServiceAPI.save(user);
+            // Solo usuarios normales (no admin ni otros)
+            if ("2".equals(user.getIdTipoUsuario())) {
+                int intentos = user.getIntentos() + 1;
+                user.setIntentos(intentos);
+
+                // Si llegó a 3 intentos, bloquear cuenta
+                if (intentos >= 3) {
+                    user.setEstado((byte)0); // 0 = bloqueado
+                }
+                usuarioServiceAPI.save(user);
+
+                if (intentos >= 3) {
+                    return new ResponseEntity<>("Cuenta bloqueada tras 3 intentos fallidos. Debes recuperar tu contraseña.", HttpStatus.FORBIDDEN);
+                }
+            }
             return new ResponseEntity<>("Credenciales inválidas", HttpStatus.UNAUTHORIZED);
         }
 
+        // Si llegó aquí, login exitoso: reiniciar intentos y activar usuario
         user.setIntentos(0);
+        // Por si acaso, si la cuenta estaba bloqueada y la contraseña es correcta (no debería pasar), reactivar
+        if ("2".equals(user.getIdTipoUsuario())) {
+            user.setEstado((byte)1);
+        }
         usuarioServiceAPI.save(user);
 
         String token = jwtUtil.generateToken(user.getLoginUsrio());
@@ -154,8 +178,9 @@ public class UsuarioRestController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     
- // src/main/java/co/edu/unbosque/controller/UsuarioRestController.java
+
     @PostMapping("/forgot")
     public ResponseEntity<?> forgotPassword(
             @RequestBody Map<String, String> payload,
@@ -189,7 +214,12 @@ public class UsuarioRestController {
         // 5) Generar y guardar nueva clave temporal (hasheada)
         String nuevaClave = Util.generarClaveTemporal();
         user.setClaveUsrio(utilidad.generarHash(user, nuevaClave));
-        user.setFchaUltmaClave(new Date());
+        user.setFchaUltmaClave(new Date());        
+     // Reiniciar intentos y reactivar cuenta solo si es usuario tipo 2
+        if ("2".equals(user.getIdTipoUsuario())) {
+            user.setIntentos(0);
+            user.setEstado((byte)1); // Activo
+        }
         usuarioServiceAPI.save(user);
 
         // 6) Registrar auditoría
