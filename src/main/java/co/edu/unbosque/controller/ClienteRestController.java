@@ -81,14 +81,14 @@ public class ClienteRestController {
 
 
     @GetMapping("/findByCorreo/{correo}")
-    public ResponseEntity<?> findByCorreo(@PathVariable String correo) {
-        // Cambia el método según cómo sea tu service/repo (ejemplo: findByCorreoCliente)
-        Cliente cliente = clienteServiceAPI.findByCorreoCliente(correo.trim().toLowerCase());
+    public ResponseEntity<Cliente> findByCorreo(@PathVariable String correo) {
+        Cliente cliente = clienteServiceAPI.findByCorreoCliente(correo);
         if (cliente == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente no encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.ok(cliente);
     }
+
 
 
     // --------- MÉTODO UTILITARIO ---------
