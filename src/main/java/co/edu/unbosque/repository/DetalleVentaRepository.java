@@ -10,5 +10,5 @@ public interface DetalleVentaRepository extends CrudRepository<DetalleVenta, Lon
     // Retorna la suma de productos comprados por el cliente en una fecha
 	@Query("SELECT COALESCE(SUM(dv.cantComp), 0) FROM DetalleVenta dv " +
 		       "WHERE dv.venta.idCliente = :idCliente AND dv.venta.fechaVenta = :fechaVenta")
-		int totalProductosClientePorFecha(int idCliente, java.util.Date fechaVenta);
+		int totalProductosClientePorFecha(Long idCliente, java.util.Date fechaVenta);
 }

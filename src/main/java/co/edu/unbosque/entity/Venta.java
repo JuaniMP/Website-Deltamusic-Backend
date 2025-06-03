@@ -27,7 +27,7 @@ public class Venta implements Serializable {
 	private Date fechaVenta;
 
 	@Column(name="id_cliente")
-	private int idCliente;
+	private Integer idCliente;
 
 	@Column(name="valor_dscto")
 	private int valorDscto;
@@ -73,11 +73,13 @@ public class Venta implements Serializable {
 		this.fechaVenta = fechaVenta;
 	}
 
-	public int getIdCliente() {
+	public Integer getIdCliente() {
 		return this.idCliente;
 	}
 
-	public void setIdCliente(int idCliente) {
+
+
+	public void setIdCliente(Integer idCliente) {
 		this.idCliente = idCliente;
 	}
 

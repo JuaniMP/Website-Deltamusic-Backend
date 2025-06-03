@@ -1,3 +1,5 @@
+// src/main/java/co/edu/unbosque/controller/UsuarioRestController.java
+
 package co.edu.unbosque.controller;
 
 import java.util.Date;
@@ -32,8 +34,8 @@ import co.edu.unbosque.utils.Util;
 @RequestMapping("/usuario")
 public class UsuarioRestController {
 	
-	@Autowired
-	private EmailService emailService;
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -54,54 +56,68 @@ public class UsuarioRestController {
 
     @PostMapping("/saveUsuario")
     public ResponseEntity<?> save(@RequestBody Usuario usuario, HttpServletRequest request) {
+        // 1) Normalizar correo y login
         String correoNorm = usuario.getCorreoUsuario().toLowerCase().trim();
-        String loginNorm  = usuario.getLoginUsrio() != null ? usuario.getLoginUsrio().toLowerCase().trim() : correoNorm;
+        String loginNorm  = usuario.getLoginUsrio() != null 
+                             ? usuario.getLoginUsrio().toLowerCase().trim() 
+                             : correoNorm;
         usuario.setCorreoUsuario(correoNorm);
         usuario.setLoginUsrio(loginNorm);
 
+        // 2) Detectar si es INSERT o UPDATE
         boolean esNuevo = (usuario.getId() == null);
         if (esNuevo) {
+            // Si existe otro usuario con el mismo correo, rechazamos
             if (usuarioServiceAPI.findByCorreoUsuario(correoNorm).isPresent()) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body("El correo " + correoNorm + " ya está registrado.");
             }
         }
 
+        // 3) Si nunca tenía fecha de última clave, la asignamos hoy
         if (usuario.getFchaUltmaClave() == null) {
             usuario.setFchaUltmaClave(new Date());
         }
 
+        // 4) Preparar contra si viene INSERT
         String claveTemporal = null;
         if (esNuevo) {
+            // Generamos contraseña temporal
             claveTemporal = Util.generarClaveTemporal();
             usuario.setClaveUsrio(utilidad.generarHash(usuario, claveTemporal));
             usuario.setIntentos(0);
-            usuario.setEstado((byte)1);
-            usuario.setIdTipoUsuario("2");
+            usuario.setEstado((byte) 1);
+            usuario.setIdTipoUsuario("2");  // Por defecto “2”=cliente normal
         } else {
+            // Si es UPDATE, venimos con usuario.getClaveUsrio() en texto plano
+            // Lo hasheamos y actualizamos fchaUltmaClave
             usuario.setClaveUsrio(utilidad.generarHash(usuario, usuario.getClaveUsrio()));
+            usuario.setFchaUltmaClave(new Date());
         }
 
+        // 5) Guardar o actualizar
         Usuario obj = usuarioServiceAPI.save(usuario);
 
-        // AUDITORÍA - En registro debe seguir como "anonymous"
+        // 6) Crear registro de auditoría
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("usuario");
         aud.setAccionAudtria(esNuevo ? "I" : "U");
-        aud.setUsrioAudtria("anonymous");
+        aud.setUsrioAudtria("anonymous");  // o usa request.getRemoteAddr(), según convenga
         aud.setIdTabla(obj.getId());
-        aud.setComentarioAudtria(esNuevo ?
-                "Registro de usuario con correo: " + correoNorm :
-                "Actualización de usuario con correo: " + correoNorm);
+        aud.setComentarioAudtria(esNuevo 
+                ? "Registro de usuario con correo: " + correoNorm
+                : "Actualización de usuario con correo: " + correoNorm);
         aud.setFchaAudtria(new Date());
         aud.setAddressAudtria(Util.getClientIp(request));
         auditoriaServiceAPI.save(aud);
 
+        // 7) Si es INSERT mando mail y devuelvo el usuario completo
         if (esNuevo && claveTemporal != null) {
             emailService.enviarClaveTemporal(correoNorm, claveTemporal);
-            return ResponseEntity.ok("Registro exitoso. Revisa tu correo para la clave temporal.");
+            return ResponseEntity.ok(obj);
         } else {
-            return ResponseEntity.ok("Actualización exitosa.");
+            // 8) Para UPDATE, devolvemos el objeto Usuario actualizado (JSON)
+            return ResponseEntity.ok(obj);
         }
     }
 
@@ -140,7 +156,7 @@ public class UsuarioRestController {
 
                 // Si llegó a 3 intentos, bloquear cuenta
                 if (intentos >= 3) {
-                    user.setEstado((byte)0); // 0 = bloqueado
+                    user.setEstado((byte) 0); // 0 = bloqueado
                 }
                 usuarioServiceAPI.save(user);
 
@@ -155,7 +171,7 @@ public class UsuarioRestController {
         user.setIntentos(0);
         // Por si acaso, si la cuenta estaba bloqueada y la contraseña es correcta (no debería pasar), reactivar
         if ("2".equals(user.getIdTipoUsuario())) {
-            user.setEstado((byte)1);
+            user.setEstado((byte) 1);
         }
         usuarioServiceAPI.save(user);
 
@@ -178,8 +194,6 @@ public class UsuarioRestController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
-    
 
     @PostMapping("/forgot")
     public ResponseEntity<?> forgotPassword(
@@ -214,11 +228,11 @@ public class UsuarioRestController {
         // 5) Generar y guardar nueva clave temporal (hasheada)
         String nuevaClave = Util.generarClaveTemporal();
         user.setClaveUsrio(utilidad.generarHash(user, nuevaClave));
-        user.setFchaUltmaClave(new Date());        
-     // Reiniciar intentos y reactivar cuenta solo si es usuario tipo 2
+        user.setFchaUltmaClave(new Date());
+        // Reiniciar intentos y reactivar cuenta solo si es usuario tipo 2
         if ("2".equals(user.getIdTipoUsuario())) {
             user.setIntentos(0);
-            user.setEstado((byte)1); // Activo
+            user.setEstado((byte) 1); // Activo
         }
         usuarioServiceAPI.save(user);
 
@@ -242,6 +256,4 @@ public class UsuarioRestController {
         return ResponseEntity
             .ok("Se ha enviado una nueva clave temporal a tu correo.");
     }
-
-
 }

@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/controller/ProductoRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
@@ -33,16 +34,20 @@ public class ProductoRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GetMapping(value = "/getAll")
+    @GetMapping("/getAll")
     public List<Producto> getAll() {
         return productoServiceAPI.getAll();
     }
 
-    @PostMapping(value = "/saveProducto")
+    /**
+     * Se usa tanto para CREAR como para ACTUALIZAR producto.
+     * Si producto.getId() != null y existe, se considera "U". Si no, "I".
+     */
+    @PostMapping("/saveProducto")
     public ResponseEntity<?> save(@RequestBody Producto producto, HttpServletRequest request) {
-        String accionAuditoria = "I"; // Por defecto inserción
+        String accionAuditoria = "I";
 
-        // Validar que existencia nunca sea mayor a stock_maximo ni negativa
+        // Validar existencia y stock máximo
         if (producto.getExistencia() < 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("La existencia no puede ser negativa.");
@@ -59,7 +64,7 @@ public class ProductoRestController {
         if (producto.getId() != null) {
             Producto existente = productoServiceAPI.get(producto.getId());
             if (existente != null) {
-                accionAuditoria = "U"; 
+                accionAuditoria = "U";
             }
         }
 
@@ -70,7 +75,7 @@ public class ProductoRestController {
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("producto");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // correo autenticado real
+        aud.setUsrioAudtria(correoUsuario);
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
                 (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de producto con ID " + obj.getId()
@@ -83,8 +88,7 @@ public class ProductoRestController {
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-
-    @DeleteMapping(value = "/deleteProducto/{id}")
+    @DeleteMapping("/deleteProducto/{id}")
     public ResponseEntity<Producto> delete(@PathVariable Long id, HttpServletRequest request) {
         Producto producto = productoServiceAPI.get(id);
         if (producto != null) {
@@ -95,7 +99,7 @@ public class ProductoRestController {
             Auditoria aud = new Auditoria();
             aud.setTablaAccion("producto");
             aud.setAccionAudtria("D");
-            aud.setUsrioAudtria(correoUsuario); // correo autenticado real
+            aud.setUsrioAudtria(correoUsuario);
             aud.setIdTabla(id);
             aud.setComentarioAudtria("Eliminación de producto con ID " + id);
             aud.setFchaAudtria(new Date());
@@ -109,7 +113,6 @@ public class ProductoRestController {
         }
     }
 
-    // --------- MÉTODO UTILITARIO ---------
     private String getCorreoFromRequest(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {

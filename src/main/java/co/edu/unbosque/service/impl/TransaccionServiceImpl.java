@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/service/impl/TransaccionServiceImpl.java
 package co.edu.unbosque.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,5 +19,10 @@ public class TransaccionServiceImpl extends GenericServiceImpl<Transaccion, Long
     @Override
     public CrudRepository<Transaccion, Long> getDao() {
         return transaccionRepository; 
+    }
+
+    @Override
+    public Transaccion findByIdCompra(Long idCompra) {
+        return transaccionRepository.findByIdCompra(idCompra);
     }
 }

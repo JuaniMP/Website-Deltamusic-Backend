@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/controller/TransaccionRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
@@ -33,19 +34,19 @@ public class TransaccionRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GetMapping(value = "/getAll")
+    @GetMapping("/getAll")
     public List<Transaccion> getAll() {
         return transaccionServiceAPI.getAll();
     }
 
-    @PostMapping(value = "/saveTransaccion")
+    @PostMapping("/saveTransaccion")
     public ResponseEntity<Transaccion> save(@RequestBody Transaccion transaccion, HttpServletRequest request) {
-        String accionAuditoria = "I"; // Por defecto inserción
+        String accionAuditoria = "I";
 
         if (transaccion.getId() != null) {
             Transaccion existente = transaccionServiceAPI.get(transaccion.getId());
             if (existente != null) {
-                accionAuditoria = "U"; // Actualización
+                accionAuditoria = "U";
             }
         }
 
@@ -56,7 +57,7 @@ public class TransaccionRestController {
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("transaccion");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // Correo autenticado real
+        aud.setUsrioAudtria(correoUsuario);
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de transacción con ID " + obj.getId()
@@ -69,16 +70,26 @@ public class TransaccionRestController {
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/findRecord/{id}")
+    @GetMapping("/findRecord/{id}")
     public ResponseEntity<Transaccion> getTransaccionById(@PathVariable Long id) throws ResourceNotFoundException {
         Transaccion transaccion = transaccionServiceAPI.get(id);
         if (transaccion == null) {
             throw new ResourceNotFoundException("Record not found for <Transaccion> " + id);
         }
-        return ResponseEntity.ok().body(transaccion);
+        return ResponseEntity.ok(transaccion);
     }
 
-    // --------- MÉTODO UTILITARIO ---------
+    @GetMapping("/findByCompra/{idCompra}")
+    public ResponseEntity<Transaccion> getByIdCompra(@PathVariable Long idCompra) {
+        Transaccion t = transaccionServiceAPI.findByIdCompra(idCompra);
+        if (t == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(t);
+    }
+
+
+
     private String getCorreoFromRequest(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {

@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/service/impl/ParametroServiceImpl.java
 package co.edu.unbosque.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,8 @@ import co.edu.unbosque.entity.Parametro;
 import co.edu.unbosque.repository.ParametroRepository;
 import co.edu.unbosque.service.api.ParametroServiceAPI;
 import co.edu.unbosque.utils.GenericServiceImpl;
+
+import java.util.Optional;
 
 @Service
 public class ParametroServiceImpl extends GenericServiceImpl<Parametro, Long> implements ParametroServiceAPI {
@@ -21,7 +24,8 @@ public class ParametroServiceImpl extends GenericServiceImpl<Parametro, Long> im
     }
 
     @Override
-    public Parametro findByDescripcionAndEstado(String descripcion, byte estado) {
+    public Optional<Parametro> findByDescripcionAndEstado(String descripcion, byte estado) {
         return parametroRepository.findByDescripcionAndEstado(descripcion, estado);
     }
 }
+

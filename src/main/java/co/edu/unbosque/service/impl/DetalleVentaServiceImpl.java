@@ -22,7 +22,9 @@ public class DetalleVentaServiceImpl extends GenericServiceImpl<DetalleVenta, Lo
         return detalleVentaRepository;
     }
     
-    public int totalProductosClientePorFecha(int idCliente, Date fechaVenta) {
-        return detalleVentaRepository.totalProductosClientePorFecha(idCliente, fechaVenta);
-    }
+
+	@Override
+	public int totalProductosClientePorFecha(Long idCliente, Date fechaVenta) {
+		return detalleVentaRepository.totalProductosClientePorFecha(idCliente, fechaVenta);
+	}
 }

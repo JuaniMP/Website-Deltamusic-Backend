@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/controller/MetodoPagoRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
@@ -40,12 +41,12 @@ public class MetodoPagoRestController {
 
     @PostMapping("/saveMetodoPago")
     public ResponseEntity<MetodoPago> save(@RequestBody MetodoPago metodoPago, HttpServletRequest request) {
-        String accionAuditoria = "I"; // Por defecto inserción
+        String accionAuditoria = "I";
 
         if (metodoPago.getId() != null) {
             MetodoPago existente = metodoPagoServiceAPI.get(metodoPago.getId());
             if (existente != null) {
-                accionAuditoria = "U"; // Actualización
+                accionAuditoria = "U";
             }
         }
 
@@ -56,7 +57,7 @@ public class MetodoPagoRestController {
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("metodo_pago");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // correo real del usuario autenticado
+        aud.setUsrioAudtria(correoUsuario);
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de método de pago con ID " + obj.getId()
@@ -89,7 +90,7 @@ public class MetodoPagoRestController {
             Auditoria aud = new Auditoria();
             aud.setTablaAccion("metodo_pago");
             aud.setAccionAudtria("D");
-            aud.setUsrioAudtria(correoUsuario); // correo real del usuario autenticado
+            aud.setUsrioAudtria(correoUsuario);
             aud.setIdTabla(id);
             aud.setComentarioAudtria("Eliminación de método de pago con ID " + id);
             aud.setFchaAudtria(new Date());
@@ -103,7 +104,6 @@ public class MetodoPagoRestController {
         }
     }
 
-    // --------- MÉTODO UTILITARIO ---------
     private String getCorreoFromRequest(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {

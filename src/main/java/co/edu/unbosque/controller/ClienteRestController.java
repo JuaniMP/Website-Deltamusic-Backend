@@ -77,6 +77,19 @@ public class ClienteRestController {
         }
         return ResponseEntity.ok(entidad);
     }
+    
+ // src/main/java/co/edu/unbosque/controller/ClienteRestController.java
+
+    @GetMapping("/findByCorreo/{correo}")
+    public ResponseEntity<?> findByCorreo(@PathVariable String correo) {
+        // Cambia el método según cómo sea tu service/repo (ejemplo: findByCorreoCliente)
+        Cliente cliente = clienteServiceAPI.findByCorreoCliente(correo.trim().toLowerCase());
+        if (cliente == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente no encontrado");
+        }
+        return ResponseEntity.ok(cliente);
+    }
+
 
     // --------- MÉTODO UTILITARIO ---------
     private String getCorreoFromRequest(HttpServletRequest request) {

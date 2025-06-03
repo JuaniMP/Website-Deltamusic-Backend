@@ -8,7 +8,7 @@ import co.edu.unbosque.entity.DetalleVenta;
 
 public interface DetalleVentaServiceAPI extends GenericServiceAPI<DetalleVenta, Long> {
 	
-	public int totalProductosClientePorFecha(int idCliente, Date fechaVenta);
+	public int totalProductosClientePorFecha(Long idCliente, Date fechaVenta);
 
     
 }

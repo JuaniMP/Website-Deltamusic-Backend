@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/controller/ParametroRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
@@ -9,7 +10,6 @@ import co.edu.unbosque.utils.ResourceNotFoundException;
 import co.edu.unbosque.utils.Util;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,19 +33,19 @@ public class ParametroRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GetMapping(value = "/getAll")
+    @GetMapping("/getAll")
     public List<Parametro> getAll() {
         return parametroServiceAPI.getAll();
     }
 
-    @PostMapping(value = "/saveParametro")
+    @PostMapping("/saveParametro")
     public ResponseEntity<Parametro> save(@RequestBody Parametro parametro, HttpServletRequest request) {
-        String accionAuditoria = "I"; // por defecto insertar
+        String accionAuditoria = "I";
 
         if (parametro.getId() != null) {
             Parametro existente = parametroServiceAPI.get(parametro.getId());
             if (existente != null) {
-                accionAuditoria = "U"; 
+                accionAuditoria = "U";
             }
         }
 
@@ -56,7 +56,7 @@ public class ParametroRestController {
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("parametro");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // correo real autenticado
+        aud.setUsrioAudtria(correoUsuario);
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de parámetro con ID " + obj.getId()
@@ -69,16 +69,16 @@ public class ParametroRestController {
         return new ResponseEntity<>(obj, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/findRecord/{id}")
+    @GetMapping("/findRecord/{id}")
     public ResponseEntity<Parametro> getParametroById(@PathVariable Long id) throws ResourceNotFoundException {
         Parametro parametro = parametroServiceAPI.get(id);
         if (parametro == null) {
             throw new ResourceNotFoundException("Record not found for <Parametro> " + id);
         }
-        return ResponseEntity.ok().body(parametro);
+        return ResponseEntity.ok(parametro);
     }
 
-    @DeleteMapping(value = "/deleteParametro/{id}")
+    @DeleteMapping("/deleteParametro/{id}")
     public ResponseEntity<Parametro> delete(@PathVariable Long id, HttpServletRequest request) {
         Parametro parametro = parametroServiceAPI.get(id);
         if (parametro != null) {
@@ -89,7 +89,7 @@ public class ParametroRestController {
             Auditoria aud = new Auditoria();
             aud.setTablaAccion("parametro");
             aud.setAccionAudtria("D");
-            aud.setUsrioAudtria(correoUsuario); // correo real autenticado
+            aud.setUsrioAudtria(correoUsuario);
             aud.setIdTabla(id);
             aud.setComentarioAudtria("Eliminación de parámetro con ID " + id);
             aud.setFchaAudtria(new Date());
@@ -103,7 +103,6 @@ public class ParametroRestController {
         }
     }
 
-    // --------- MÉTODO UTILITARIO ---------
     private String getCorreoFromRequest(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
@@ -113,3 +112,4 @@ public class ParametroRestController {
         return "desconocido";
     }
 }
+

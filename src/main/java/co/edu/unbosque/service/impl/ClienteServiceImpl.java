@@ -1,3 +1,4 @@
+// src/main/java/co/edu/unbosque/service/impl/ClienteServiceImpl.java
 package co.edu.unbosque.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,5 +19,10 @@ public class ClienteServiceImpl extends GenericServiceImpl<Cliente, Long> implem
     @Override
     public CrudRepository<Cliente, Long> getDao() {
         return clienteRepository;
+    }
+
+    @Override
+    public Cliente findByCorreoCliente(String correoCliente) {
+        return clienteRepository.findByCorreoCliente(correoCliente);
     }
 }
