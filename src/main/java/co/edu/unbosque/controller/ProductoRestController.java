@@ -1,4 +1,3 @@
-// src/main/java/co/edu/unbosque/controller/ProductoRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;
@@ -6,7 +5,6 @@ import co.edu.unbosque.entity.Producto;
 import co.edu.unbosque.service.api.AuditoriaServiceAPI;
 import co.edu.unbosque.service.api.ProductoServiceAPI;
 import co.edu.unbosque.utils.JwtUtil;
-import co.edu.unbosque.utils.ResourceNotFoundException;
 import co.edu.unbosque.utils.Util;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

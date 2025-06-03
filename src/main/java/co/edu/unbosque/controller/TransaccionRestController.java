@@ -1,4 +1,3 @@
-// src/main/java/co/edu/unbosque/controller/TransaccionRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.Auditoria;

@@ -1,5 +1,3 @@
-// src/main/java/co/edu/unbosque/controller/UsuarioRestController.java
-
 package co.edu.unbosque.controller;
 
 import java.util.Date;

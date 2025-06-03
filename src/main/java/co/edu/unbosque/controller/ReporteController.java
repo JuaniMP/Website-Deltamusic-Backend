@@ -24,7 +24,7 @@ public class ReporteController {
     public ResponseEntity<Resource> descargarReporteExcel() throws Exception {
         InputStreamResource file = new InputStreamResource(reporteService.generarReporteExcel());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=estadisticas.xlsx")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Estadisticas_DeltaAlbums_EXCEL.xlsx")
                 .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 .body(file);
     }
@@ -33,7 +33,7 @@ public class ReporteController {
     public ResponseEntity<Resource> descargarReportePdf() throws Exception {
         InputStreamResource file = new InputStreamResource(reporteService.generarReportePdf());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=estadisticas.pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Estadisticas_DeltaAlbums_PDF.pdf")
                 .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
                 .body(file);
     }

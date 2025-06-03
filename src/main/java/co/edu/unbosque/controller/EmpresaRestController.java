@@ -56,7 +56,7 @@ public class EmpresaRestController {
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("empresa");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // correo real del usuario autenticado
+        aud.setUsrioAudtria(correoUsuario); 
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de empresa con ID " + obj.getId()

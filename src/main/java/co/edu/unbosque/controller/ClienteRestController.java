@@ -56,7 +56,7 @@ public class ClienteRestController {
         Auditoria aud = new Auditoria();
         aud.setTablaAccion("cliente");
         aud.setAccionAudtria(accionAuditoria);
-        aud.setUsrioAudtria(correoUsuario); // Aquí el correo real
+        aud.setUsrioAudtria(correoUsuario); 
         aud.setIdTabla(obj.getId());
         aud.setComentarioAudtria(
             (accionAuditoria.equals("I") ? "Creación" : "Actualización") + " de cliente con ID " + obj.getId()
@@ -78,7 +78,7 @@ public class ClienteRestController {
         return ResponseEntity.ok(entidad);
     }
     
- // src/main/java/co/edu/unbosque/controller/ClienteRestController.java
+
 
     @GetMapping("/findByCorreo/{correo}")
     public ResponseEntity<?> findByCorreo(@PathVariable String correo) {

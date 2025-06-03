@@ -1,4 +1,3 @@
-// src/main/java/co/edu/unbosque/controller/VentaRestController.java
 package co.edu.unbosque.controller;
 
 import co.edu.unbosque.entity.*;
@@ -287,24 +286,6 @@ public class VentaRestController {
         return "desconocido";
     }
 
-    /**
-     * DTO para recibir:
-     * {
-     *   "venta": {
-     *       "fechaVenta": "2025-06-02",   // opcional
-     *       "detalles": [
-     *           { "idProducto": 3, "cantComp": 1 },
-     *           ...
-     *       ]
-     *   },
-     *   "transaccion": {
-     *       "idMetodoPago": 5,
-     *       "idBanco": "Banco de Colombia",
-     *       "idFranquicia": "NA",
-     *       "numTarjeta": "NA"
-     *   }
-     * }
-     */
     public static class VentaRequest {
         public Venta venta;
         public Transaccion transaccion;

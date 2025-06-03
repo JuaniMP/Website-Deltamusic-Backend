@@ -33,7 +33,7 @@ public class CategoriaRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Si necesitas usar info del usuario, por ejemplo para más datos:
+
     @Autowired
     private UsuarioServiceAPI usuarioServiceAPI;
 
