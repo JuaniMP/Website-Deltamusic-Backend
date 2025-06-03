@@ -165,3 +165,47 @@ org.hibernate.NonUniqueResultException: Query did not return a unique result: 2 
 2025-06-03 01:14:52.809 INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
 2025-06-03 01:14:52.809 INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
 2025-06-03 01:14:52.815 INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 6 ms
+2025-06-03 04:37:47.987 INFO  o.s.b.a.SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin - Application shutdown requested.
+2025-06-03 04:37:48.033 INFO  o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-06-03 04:37:48.162 INFO  o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-06-03 04:37:48.186 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-06-03 04:37:48.207 INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-06-03 04:37:48.231 INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-06-03 04:38:49.735 INFO  c.e.u.ProyectoFinalGrupo4Application - Starting ProyectoFinalGrupo4Application using Java 17.0.11 with PID 28296 (C:\Users\Toji\Desktop\importante\ProyectoFinalGrupo4\target\classes started by Toji in C:\Users\Toji\Desktop\importante\ProyectoFinalGrupo4)
+2025-06-03 04:38:49.742 INFO  c.e.u.ProyectoFinalGrupo4Application - No active profile set, falling back to 1 default profile: "default"
+2025-06-03 04:38:49.819 INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-06-03 04:38:49.819 INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-06-03 04:38:50.985 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-06-03 04:38:51.186 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 184 ms. Found 12 JPA repository interfaces.
+2025-06-03 04:38:52.034 INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8181 (http)
+2025-06-03 04:38:52.049 INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-06-03 04:38:52.050 INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.41]
+2025-06-03 04:38:52.146 INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-06-03 04:38:52.146 INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2326 ms
+2025-06-03 04:38:52.376 INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-06-03 04:38:52.451 INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.15.Final
+2025-06-03 04:38:52.509 INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2025-06-03 04:38:52.940 INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-06-03 04:38:52.982 INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-06-03 04:38:53.423 INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@349222db
+2025-06-03 04:38:53.427 INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-06-03 04:38:53.592 INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0.34
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-06-03 04:38:55.260 INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-06-03 04:38:55.269 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-06-03 04:38:55.845 INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-06-03 04:38:57.624 INFO  o.s.v.b.OptionalValidatorFactoryBean - Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-06-03 04:38:58.050 WARN  o.s.b.a.t.ThymeleafAutoConfiguration$DefaultTemplateResolverConfiguration - Cannot find template location: classpath:/templates/ (please add some templates, check your Thymeleaf configuration, or set spring.thymeleaf.check-template-location=false)
+2025-06-03 04:38:58.342 INFO  o.s.w.s.a.s.AnnotationActionEndpointMapping - Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2025-06-03 04:38:58.419 INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2025-06-03 04:38:58.497 INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8181 (http) with context path '/'
+2025-06-03 04:38:58.515 INFO  c.e.u.ProyectoFinalGrupo4Application - Started ProyectoFinalGrupo4Application in 9.447 seconds (process running for 10.543)
+2025-06-03 04:39:16.318 INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-06-03 04:39:16.319 INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-06-03 04:39:16.324 INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 5 ms
