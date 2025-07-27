@@ -10,10 +10,12 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
             .allowedOrigins(
-                "https://website-deltamusic-frontend.vercel.app", // Cambia por tu dominio real de Vercel
-                "https://website-deltamusic.vercel.app") // Puedes poner más dominios si tienes varios
+                "https://website-delta-music.vercel.app" // <--- este es el que debes usar
+            )
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
             .allowCredentials(true);
     }
 }
+
+
