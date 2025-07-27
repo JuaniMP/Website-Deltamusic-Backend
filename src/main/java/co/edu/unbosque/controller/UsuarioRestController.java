@@ -26,7 +26,6 @@ import co.edu.unbosque.utils.LoginRequest;
 import co.edu.unbosque.utils.ResourceNotFoundException;
 import co.edu.unbosque.utils.Util;
 
-@CrossOrigin(origins = "*")
 @Slf4j
 @RestController
 @RequestMapping("/usuario")
